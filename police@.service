@@ -1,0 +1,9 @@
+[Unit]
+Description=Police instance %i
+
+[Service]
+ExecStart=/usr/lib/police/police.sh %h/.config/police/%i normal
+Restart=always
+
+[Install]
+WantedBy=default.target
