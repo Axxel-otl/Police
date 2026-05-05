@@ -3,13 +3,26 @@
 CONFIG_DIR="$HOME/.config/police"
 mkdir -p "$CONFIG_DIR"
 
+usage() {
+  echo "Usage:"
+  echo "  police <name> <key> <lock>"
+  echo "  police -r <name> <key> <lock>"
+  echo "  police -l"
+  echo "  police -s <name>"
+  exit 1
+}
+
+[[ -z "$1" ]] && usage
+
 case "$1" in
   -l)
-    systemctl --user list-units --type=service | grep 'police@'
+    systemctl --user list-units "police@*.service"
     ;;
 
   -s)
     NAME="$2"
+    [[ -z "$NAME" ]] && usage
+
     systemctl --user stop "police@$NAME.service"
     systemctl --user disable "police@$NAME.service"
     rm -f "$CONFIG_DIR/$NAME"
@@ -17,8 +30,20 @@ case "$1" in
 
   -r)
     NAME="$2"
-    KEY="$(realpath "$3")"
-    LOCK="$(realpath "$4")"
+    KEY="$3"
+    LOCK="$4"
+
+    [[ -z "$NAME" || -z "$KEY" || -z "$LOCK" ]] && usage
+
+    KEY="$(realpath "$KEY" 2>/dev/null)" || {
+      echo "Invalid key path"
+      exit 1
+    }
+
+    LOCK="$(realpath "$LOCK" 2>/dev/null)" || {
+      echo "Invalid lock path"
+      exit 1
+    }
 
     echo "reverse::$KEY::$LOCK" > "$CONFIG_DIR/$NAME"
 
@@ -28,8 +53,20 @@ case "$1" in
 
   *)
     NAME="$1"
-    KEY="$(realpath "$2")"
-    LOCK="$(realpath "$3")"
+    KEY="$2"
+    LOCK="$3"
+
+    [[ -z "$NAME" || -z "$KEY" || -z "$LOCK" ]] && usage
+
+    KEY="$(realpath "$KEY" 2>/dev/null)" || {
+      echo "Invalid key path"
+      exit 1
+    }
+
+    LOCK="$(realpath "$LOCK" 2>/dev/null)" || {
+      echo "Invalid lock path"
+      exit 1
+    }
 
     echo "normal::$KEY::$LOCK" > "$CONFIG_DIR/$NAME"
 
