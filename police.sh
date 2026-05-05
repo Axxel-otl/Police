@@ -7,14 +7,15 @@ FILE="$1"
   exit 1
 }
 
-# Global config and then user override
+# Global config + user override
 source /etc/police.conf 2>/dev/null
 source "$HOME/.config/police/config" 2>/dev/null
 
 LOCKED="${LOCKED:-000}"
 OPENED="${OPENED:-700}"
 
-IFS="::" read -r MODE KEY LOCK < "$FILE"
+# FIX parsing correcto
+read -r MODE KEY LOCK <<< "$(sed 's/::/ /g' "$FILE")"
 
 [[ -z "$MODE" || -z "$KEY" || -z "$LOCK" ]] && {
   echo "Invalid config: $FILE"
@@ -24,13 +25,17 @@ IFS="::" read -r MODE KEY LOCK < "$FILE"
 LAST=""
 
 while true; do
-  CURRENT=$([[ -e "$KEY" ]] && echo 1 || echo 0)
+  if [[ -e "$KEY" ]]; then
+    CURRENT=1
+  else
+    CURRENT=0
+  fi
 
   if [[ "$CURRENT" != "$LAST" ]]; then
     if [[ "$MODE" == "reverse" ]]; then
-      [[ -e "$KEY" ]] && chmod "$LOCKED" "$LOCK" || chmod "$OPENED" "$LOCK"
+      [[ "$CURRENT" == "1" ]] && chmod "$LOCKED" "$LOCK" || chmod "$OPENED" "$LOCK"
     else
-      [[ -e "$KEY" ]] && chmod "$OPENED" "$LOCK" || chmod "$LOCKED" "$LOCK"
+      [[ "$CURRENT" == "1" ]] && chmod "$OPENED" "$LOCK" || chmod "$LOCKED" "$LOCK"
     fi
     LAST="$CURRENT"
   fi
