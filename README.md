@@ -4,30 +4,55 @@ A simple file permission watcher for Linux.
 
 It monitors the existence of a "key" file and toggles permissions of a target file or directory accordingly.
 
-**Disclaimer: AI was used in the development of this proyect**
+**Disclaimer: This is not a security tool. It only automates permission changes.**
+
+---
+
+## Concept
+
+- If the key exists → target is unlocked  
+- If the key does not exist → target is locked  
+
+---
 
 ## Usage
 
 ### Create a service
 
-`police <name> <key_path> <target_path>`
+police <name> <key_path> <target_path>
 
-If the key exists → target is unlocked  
-
-If the key does not exist → target is locked  
+---
 
 ### Reverse mode
 
-`police -r <name> <key_path> <target_path>`
+police -r <name> <key_path> <target_path>
 
-If the key exists → target stays locked 
-
-If the key does not exist → target is unlocked  
+---
 
 ### List services
 
-`police -l`
+police -l
+
+---
 
 ### Stop a service
 
-`police -s <name>`
+police -s <name>
+
+---
+
+## Configuration
+
+Global config:
+- /etc/police.conf
+
+User config:
+- ~/.config/police/config
+
+Example:
+
+LOCKED=000  
+OPENED=700  
+
+## Notes
+AI was used in the development of this proyect.
