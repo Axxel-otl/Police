@@ -1,34 +1,38 @@
 #!/bin/bash
 
 FILE="$1"
-MODE="$2"  # normal | reverse
 
 [[ -f "$FILE" ]] || {
-  echo "Config file not found: $FILE"
+  echo "Config not found: $FILE"
   exit 1
 }
 
-PAIR="$(cat "$FILE")"
+# Global config and then user override
+source /etc/police.conf 2>/dev/null
+source "$HOME/.config/police/config" 2>/dev/null
 
-TRIGGER="${PAIR%%::*}"
-TARGET="${PAIR##*::}"
+LOCKED="${LOCKED:-000}"
+OPENED="${OPENED:-700}"
 
-apply() {
-  if [[ "$MODE" == "reverse" ]]; then
-    [[ -e "$TRIGGER" ]] && chmod 000 "$TARGET" || chmod 1777 "$TARGET"
-  else
-    [[ -e "$TRIGGER" ]] && chmod 1777 "$TARGET" || chmod 000 "$TARGET"
-  fi
+IFS="::" read -r MODE KEY LOCK < "$FILE"
+
+[[ -z "$MODE" || -z "$KEY" || -z "$LOCK" ]] && {
+  echo "Invalid config: $FILE"
+  exit 1
 }
 
-LAST_STATE=""
+LAST=""
 
 while true; do
-  CURRENT_STATE=$([[ -e "$TRIGGER" ]] && echo 1 || echo 0)
+  CURRENT=$([[ -e "$KEY" ]] && echo 1 || echo 0)
 
-  if [[ "$CURRENT_STATE" != "$LAST_STATE" ]]; then
-    apply
-    LAST_STATE="$CURRENT_STATE"
+  if [[ "$CURRENT" != "$LAST" ]]; then
+    if [[ "$MODE" == "reverse" ]]; then
+      [[ -e "$KEY" ]] && chmod "$LOCKED" "$LOCK" || chmod "$OPENED" "$LOCK"
+    else
+      [[ -e "$KEY" ]] && chmod "$OPENED" "$LOCK" || chmod "$LOCKED" "$LOCK"
+    fi
+    LAST="$CURRENT"
   fi
 
   sleep 1
