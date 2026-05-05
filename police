@@ -1,1 +1,39 @@
+#!/bin/bash
 
+CONFIG_DIR="$HOME/.config/police"
+mkdir -p "$CONFIG_DIR"
+
+case "$1" in
+  -l)
+    systemctl --user list-units --type=service | grep 'police@'
+    ;;
+
+  -s)
+    NAME="$2"
+    systemctl --user stop "police@$NAME.service"
+    systemctl --user disable "police@$NAME.service"
+    rm -f "$CONFIG_DIR/$NAME"
+    ;;
+
+  -r)
+    NAME="$2"
+    KEY="$(realpath "$3")"
+    LOCK="$(realpath "$4")"
+
+    echo "reverse::$KEY::$LOCK" > "$CONFIG_DIR/$NAME"
+
+    systemctl --user daemon-reload
+    systemctl --user enable --now "police@$NAME.service"
+    ;;
+
+  *)
+    NAME="$1"
+    KEY="$(realpath "$2")"
+    LOCK="$(realpath "$3")"
+
+    echo "normal::$KEY::$LOCK" > "$CONFIG_DIR/$NAME"
+
+    systemctl --user daemon-reload
+    systemctl --user enable --now "police@$NAME.service"
+    ;;
+esac
