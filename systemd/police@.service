@@ -2,7 +2,7 @@
 Description=Police instance %i
 
 [Service]
-ExecStart=/usr/lib/police/police.sh %h/.config/police/%i normal
+ExecStart=/usr/lib/police/police.sh %h/.config/police/%i
 Restart=always
 
 [Install]
