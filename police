@@ -3,25 +3,23 @@
 CONFIG_DIR="$HOME/.config/police"
 mkdir -p "$CONFIG_DIR"
 
-usage() {
-  echo "Usage:"
-  echo "  police <name> <key> <lock>"
-  echo "  police -r <name> <key> <lock>"
-  echo "  police -l"
-  echo "  police -s <name>"
+error() {
+  echo "Error: $1" >&2
   exit 1
 }
 
-[[ -z "$1" ]] && usage
+warn() {
+  echo "Warning: $1" >&2
+}
 
 case "$1" in
   -l)
-    systemctl --user list-units "police@*.service"
+    systemctl --user list-units --type=service | grep 'police@'
     ;;
 
   -s)
     NAME="$2"
-    [[ -z "$NAME" ]] && usage
+    [[ -z "$NAME" ]] && error "Missing service name"
 
     systemctl --user stop "police@$NAME.service"
     systemctl --user disable "police@$NAME.service"
@@ -33,17 +31,15 @@ case "$1" in
     KEY="$3"
     LOCK="$4"
 
-    [[ -z "$NAME" || -z "$KEY" || -z "$LOCK" ]] && usage
+    [[ -z "$NAME" || -z "$KEY" || -z "$LOCK" ]] && error "Usage: police -r <name> <key> <lock>"
 
-    KEY="$(realpath "$KEY" 2>/dev/null)" || {
-      echo "Invalid key path"
-      exit 1
-    }
+    KEY="$(realpath -m "$KEY")"
+    LOCK="$(realpath -m "$LOCK")"
 
-    LOCK="$(realpath "$LOCK" 2>/dev/null)" || {
-      echo "Invalid lock path"
-      exit 1
-    }
+    [[ "$KEY" == "$LOCK" ]] && error "key and lock cannot be the same"
+
+    [[ ! -e "$KEY" ]] && warn "key does not exist"
+    [[ ! -e "$LOCK" ]] && warn "lock does not exist"
 
     echo "reverse::$KEY::$LOCK" > "$CONFIG_DIR/$NAME"
 
@@ -56,17 +52,15 @@ case "$1" in
     KEY="$2"
     LOCK="$3"
 
-    [[ -z "$NAME" || -z "$KEY" || -z "$LOCK" ]] && usage
+    [[ -z "$NAME" || -z "$KEY" || -z "$LOCK" ]] && error "Usage: police <name> <key> <lock>"
 
-    KEY="$(realpath "$KEY" 2>/dev/null)" || {
-      echo "Invalid key path"
-      exit 1
-    }
+    KEY="$(realpath -m "$KEY")"
+    LOCK="$(realpath -m "$LOCK")"
 
-    LOCK="$(realpath "$LOCK" 2>/dev/null)" || {
-      echo "Invalid lock path"
-      exit 1
-    }
+    [[ "$KEY" == "$LOCK" ]] && error "key and lock cannot be the same"
+
+    [[ ! -e "$KEY" ]] && warn "key does not exist"
+    [[ ! -e "$LOCK" ]] && warn "lock does not exist"
 
     echo "normal::$KEY::$LOCK" > "$CONFIG_DIR/$NAME"
 

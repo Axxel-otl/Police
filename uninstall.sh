@@ -1,32 +1,18 @@
 #!/bin/bash
 
-PREFIX="${PREFIX:-$HOME/.local}"
+PREFIX="${PREFIX:-/usr}"
 
-echo "Stopping all Police services..."
-
-# Detener y deshabilitar TODAS las instancias
-systemctl --user list-units --type=service "police@*.service" --no-legend \
-| awk '{print $1}' | while read -r svc; do
-  systemctl --user stop "$svc"
-  systemctl --user disable "$svc"
-done
-
-echo "Removing binaries and services..."
+systemctl --user stop 'police@*.service' 2>/dev/null
+systemctl --user disable 'police@*.service' 2>/dev/null
 
 rm -f "$PREFIX/bin/police"
 rm -f "$PREFIX/lib/police/police.sh"
 rm -f "$PREFIX/lib/systemd/user/police@.service"
-
-echo "Removing user config..."
+rm -f "$PREFIX/etc/police.conf"
+rm -rf "$PREFIX/share/licenses/police"
 
 rm -rf "$HOME/.config/police"
 
-echo "Removing global config..."
-
-sudo rm -f /etc/police.conf 2>/dev/null
-
-echo "Reloading systemd..."
-
 systemctl --user daemon-reload
 
-echo "Uninstalled completely."
+echo "Police removed completely"
